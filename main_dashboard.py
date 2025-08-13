@@ -5,7 +5,7 @@ import plotly.graph_objects as go
 import plotly.express as px
 
 # Import all existing functions
-from data_loading import load_data, get_customer_summary, get_daily_usage_summary
+from data_manager import load_data, get_customer_summary, get_daily_usage_summary  # New centralized data manager
 from stickiness import (
     calculate_action_stickiness, 
     get_weekly_new_users, 
