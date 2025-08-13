@@ -1,0 +1,16 @@
+# Virtual Environment
+venv/
+.venv/
+__pycache__/
+
+# Data files
+*.csv
+
+# Large images
+*.png
+
+# Jupyter checkpoints
+.ipynb_checkpoints/
+
+# System files
+.DS_Store
