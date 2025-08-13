@@ -5,8 +5,8 @@ import numpy as np
 
 def calculate_purchase_metrics():
     # Read the data
-    df = pd.read_csv('Customers.csv')
-    usage_df = pd.read_csv('Usage.csv')
+    df = pd.read_csv('customers.csv')
+    usage_df = pd.read_csv('usage.csv')
     
     # Function to safely convert dates
     def safe_parse_date(date_str):
