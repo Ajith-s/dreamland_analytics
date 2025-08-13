@@ -12,7 +12,7 @@ from stickiness import (
     get_stickiness_insights,
     STICKINESS_THRESHOLDS
 )
-from visualizations import plot_overview_trends, show_product_metrics, show_action_stickiness_section
+from visualizations import plot_overview_trends, show_product_metrics
 from churn_analysis import calculate_churn_metrics, plot_churn_analysis,calculate_consolidated_churn_metrics,plot_consolidated_churn
 from product_transitions import analyze_product_transitions, show_product_transitions
 from purchase_funnel import create_funnel_figures
