@@ -2,40 +2,25 @@ import pandas as pd
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
+from data_manager import load_data
 
 def calculate_purchase_metrics():
-    # Read the data
-    df = pd.read_csv('customers.csv')
-    usage_df = pd.read_csv('usage.csv')
-    
-    # Function to safely convert dates
-    def safe_parse_date(date_str):
-        if pd.isna(date_str) or date_str == '#REF!':
-            return pd.NaT
-        try:
-            return pd.to_datetime(date_str)
-        except:
-            return pd.NaT
-    
-    # Convert dates to datetime safely
-    date_columns = ['first_activation_date', 'first_purchase_date']
-    for col in date_columns:
-        df[col] = pd.to_datetime(df[col], format='%m/%d/%y', errors='coerce')
-    
-    # Safely convert event_date
-    usage_df['event_date'] = usage_df['event_date'].apply(safe_parse_date)
+    # Get data from centralized loader
+    usage_df, customers_df = load_data()
+    if usage_df is None or customers_df is None:
+        return None
     
     # Calculate time to purchase
-    df['time_to_purchase'] = (df['first_purchase_date'] - df['first_activation_date']).dt.days
+    customers_df['time_to_purchase'] = (customers_df['first_purchase_date'] - customers_df['first_activation_date']).dt.days
     
     # Count negative time cases
-    negative_time_cases = df[df['time_to_purchase'] < 0]['customerid'].nunique()
+    negative_time_cases = customers_df[customers_df['time_to_purchase'] < 0]['customerid'].nunique()
     
     # Overall metrics
-    total_activated = df[df['first_activation_date'].notna()]['customerid'].nunique()
+    total_activated = customers_df[customers_df['first_activation_date'].notna()]['customerid'].nunique()
     
     # Get customers who purchased
-    purchased_customers = df[df['first_purchase_date'].notna()]['customerid'].unique()
+    purchased_customers = customers_df[customers_df['first_purchase_date'].notna()]['customerid'].unique()
     total_purchased = len(purchased_customers)
     
     # Count purchased customers who have usage data
@@ -46,13 +31,13 @@ def calculate_purchase_metrics():
     
     overall_purchase_rate = total_purchased / total_activated if total_activated > 0 else 0
     overall_usage_rate = total_used / total_purchased if total_purchased > 0 else 0
-    avg_time_to_purchase = df[df['time_to_purchase'] >= 0]['time_to_purchase'].mean()
+    avg_time_to_purchase = customers_df[customers_df['time_to_purchase'] >= 0]['time_to_purchase'].mean()
     
     # Product-level metrics
     product_metrics = []
     
-    for product in df['product_name'].dropna().unique():
-        product_data = df[df['product_name'] == product]
+    for product in customers_df['product_name'].dropna().unique():
+        product_data = customers_df[customers_df['product_name'] == product]
         
         # Get activated and purchased counts
         activated = product_data[product_data['first_activation_date'].notna()]['customerid'].nunique()
@@ -99,7 +84,9 @@ def calculate_purchase_metrics():
 
 def create_funnel_figures():
     metrics = calculate_purchase_metrics()
-    
+    if metrics is None:
+        return None, None
+        
     # Create overall funnel
     overall_fig = go.Figure()
     
@@ -141,27 +128,3 @@ def create_funnel_figures():
     )
     
     return overall_fig, product_fig
-
-if __name__ == "__main__":
-    metrics = calculate_purchase_metrics()
-    overall_fig, product_fig = create_funnel_figures()
-    
-    # Print metrics
-    print("\nOverall Metrics:")
-    print(f"Activated: {metrics['overall']['activated']}")
-    print(f"Purchased: {metrics['overall']['purchased']}")
-    print(f"Used: {metrics['overall']['used']}")
-    print(f"Purchase Rate: {metrics['overall']['purchase_rate']:.2%}")
-    print(f"Usage Rate: {metrics['overall']['usage_rate']:.2%}")
-    print(f"Average Time to Purchase: {metrics['overall']['avg_time_to_purchase']:.1f} days")
-    print(f"Customers with negative time to purchase: {metrics['overall']['negative_time_cases']}")
-    
-    print("\nProduct Metrics:")
-    for product in metrics['by_product']:
-        print(f"\n{product['product']}:")
-        print(f"Activated: {product['activated']}")
-        print(f"Purchased: {product['purchased']}")
-        print(f"Used: {product['used']}")
-        print(f"Purchase Rate: {product['purchase_rate']:.2%}")
-        print(f"Usage Rate: {product['usage_rate']:.2%}")
-        print(f"Average Time to Purchase: {product['avg_time_to_purchase']:.1f} days")
